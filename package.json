@@ -2,7 +2,7 @@
   "name": "swagger-markdown",
   "version": "1.0.1",
   "description": "Create markdown API documentation from swagger file",
-  "main": "index.js",
+  "main": "app/convert.js",
   "scripts": {
     "test": "npm run test:app && npm run test:lint",
     "test:app": "mocha \"tests/**/*.spec.js\"",
