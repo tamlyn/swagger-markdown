@@ -1,4 +1,3 @@
-const inArray = require('../lib/inArray');
 const transformResponses = require('./pathResponses');
 const transformParameters = require('./pathParameters');
 const security = require('./security');
@@ -9,49 +8,49 @@ const security = require('./security');
  */
 const ALLOWED_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options'];
 
-module.exports = (path, data, parameters) => {
+module.exports = (path, pathSpec) => {
   const res = [];
   let pathParameters = null;
 
-  if (path && data) {
+  if (path && pathSpec) {
     // Make path as a header
     res.push(`### ${path}\n`);
 
     // Check if parameter for path are in the place
-    if ('parameters' in data) {
-      pathParameters = data.parameters;
+    if ('parameters' in pathSpec) {
+      pathParameters = pathSpec.parameters;
     }
 
     // Go further method by methods
-    Object.keys(data).map(method => {
-      if (inArray(method, ALLOWED_METHODS)) {
+    Object.keys(pathSpec).map(method => {
+      if (ALLOWED_METHODS.includes(method)) {
         // Set method as a subheader
         res.push(`#### ${method.toUpperCase()}`);
-        const pathInfo = data[method];
+        const methodSpec = pathSpec[method];
 
         // Set summary
-        if ('summary' in pathInfo) {
-          res.push(`##### Summary:\n\n${pathInfo.summary}\n`);
+        if ('summary' in methodSpec) {
+          res.push(`##### Summary:\n\n${methodSpec.summary}\n`);
         }
 
         // Set description
-        if ('description' in pathInfo) {
-          res.push(`##### Description:\n\n${pathInfo.description}\n`);
+        if ('description' in methodSpec) {
+          res.push(`##### Description:\n\n${methodSpec.description}\n`);
         }
 
         // Build parameters
-        if ('parameters' in pathInfo || pathParameters) {
-          res.push(`${transformParameters(pathInfo.parameters, pathParameters, parameters)}\n`);
+        if ('parameters' in methodSpec || pathParameters) {
+          res.push(`${transformParameters(methodSpec.parameters, pathParameters, methodSpec.requestBody)}\n`);
         }
 
         // Build responses
-        if ('responses' in pathInfo) {
-          res.push(`${transformResponses(pathInfo.responses)}\n`);
+        if ('responses' in methodSpec) {
+          res.push(`${transformResponses(methodSpec.responses)}\n`);
         }
 
         // Build security
-        if ('security' in pathInfo) {
-          res.push(`${security(pathInfo.security)}\n`);
+        if ('security' in methodSpec) {
+          res.push(`${security(methodSpec.security)}\n`);
         }
       }
     });

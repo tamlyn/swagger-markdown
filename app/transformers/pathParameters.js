@@ -1,36 +1,46 @@
 const transformDataTypes = require('./dataTypes');
 const Schema = require('../models/schema');
 
-module.exports = (parameters, pathParameters) => {
+module.exports = (parameters, pathParameters, requestBody) => {
   const res = [];
   res.push('##### Parameters\n');
   res.push('| Name | Located in | Description | Required | Schema |');
   res.push('| ---- | ---------- | ----------- | -------- | ---- |');
-  [].concat(pathParameters, parameters).map(keys => {
-    if (keys) {
+  const allParameters = [].concat(pathParameters, parameters);
+  if (requestBody) {
+    allParameters.push({
+      name: 'Request body',
+      in: 'body',
+      description: requestBody.description,
+      required: requestBody.required,
+      schema: Object.entries(requestBody.content)[0].schema
+    });
+  }
+  allParameters.forEach(param => {
+    if (param) {
       const line = [];
       // Name first
-      line.push(keys.name || '');
+      line.push(param.name || '');
       // Scope (in)
-      line.push(keys.in || '');
+      line.push(param.in || '');
       // description
-      if ('description' in keys) {
-        line.push(keys.description.replace(/[\r\n]/g, ' '));
+      if ('description' in param) {
+        line.push(param.description.replace(/[\r\n]/g, ' '));
       } else {
         line.push('');
       }
-      line.push(keys.required ? 'Yes' : 'No');
+      line.push(param.required ? 'Yes' : 'No');
 
       // Prepare schema to be transformed
       let schema = null;
-      if ('schema' in keys) {
-        schema = new Schema(keys.schema);
+      if ('schema' in param) {
+        schema = new Schema(param.schema);
       } else {
         schema = new Schema();
-        schema.setType('type' in keys ? keys.type : null);
-        schema.setFormat('format' in keys ? keys.format : null);
-        schema.setReference('$ref' in keys ? keys.$ref : null);
-        schema.setItems('items' in keys ? keys.items : null);
+        schema.setType('type' in param ? param.type : null);
+        schema.setFormat('format' in param ? param.format : null);
+        schema.setReference('$ref' in param ? param.$ref : null);
+        schema.setItems('items' in param ? param.items : null);
       }
 
       line.push(transformDataTypes(schema));

@@ -14,7 +14,11 @@ function partiallyDereference(node, $refs) {
   for (const [key, value] of Object.entries(node)) {
     if (Array.isArray(value)) {
       obj[key] = value.map(item => partiallyDereference(item, $refs));
-    } else if (key === '$ref' && !value.startsWith('#/definitions/')) {
+    } else if (
+      key === '$ref' &&
+      !value.startsWith('#/components/schemas/') &&
+      !value.startsWith('#/definitions/')
+    ) {
       return partiallyDereference($refs.get(value), $refs);
     } else {
       obj[key] = partiallyDereference(value, $refs);
@@ -25,9 +29,6 @@ function partiallyDereference(node, $refs) {
 
 function transformSwagger(inputDoc, options = {}) {
   const document = [];
-
-  // Collect parameters
-  const parameters = 'parameters' in inputDoc ? inputDoc.parameters : {};
 
   // Process info
   if (!options.skipInfo && 'info' in inputDoc) {
@@ -41,8 +42,8 @@ function transformSwagger(inputDoc, options = {}) {
   // Security definitions
   if ('securityDefinitions' in inputDoc) {
     document.push(transformSecurityDefinitions(inputDoc.securityDefinitions));
-  } else if (inputDoc.components && inputDoc.components.securitySchemas) {
-    document.push(transformSecurityDefinitions(inputDoc.components.securityDefinitions));
+  } else if (inputDoc.components && inputDoc.components.securitySchemes) {
+    document.push(transformSecurityDefinitions(inputDoc.components.securitySchemes));
   }
 
   // Process Paths
@@ -50,7 +51,6 @@ function transformSwagger(inputDoc, options = {}) {
     Object.keys(inputDoc.paths).forEach(path => document.push(transformPath(
       path,
       inputDoc.paths[path],
-      parameters
     )));
   }
 
